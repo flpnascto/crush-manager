@@ -29,6 +29,17 @@ app.get('/crush', rescue(async (req, res) => {
   res.json(findAll);
 }));
 
+app.get('/crush/:id', rescue(async (req, res) => {
+  const artistId = req.params.id;
+  const findAll = await apiData();
+  const artist = findAll.find((e) => e.id === parseInt(artistId, 10));
+
+  if (!artist) {
+    res.status(404).json({ message: 'Crush não encontrado' });
+  }
+  res.json(artist);
+}));
+
 app.use((err, req, res) => {
   res.status(err.code).send(err.error);
 });
