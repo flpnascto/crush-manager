@@ -12,12 +12,13 @@ const validateRateMiddleware = require('./middlewares/validateRateMiddleware');
 
 const app = express();
 app.use(bodyParser.json());
+const DATAFILE = './crush.json';
 
 const SUCCESS = 200;
 const PORT = '3000';
 
 const apiData = async () => {
-  const readData = await fs.readFile('./crush.json')
+  const readData = await fs.readFile(DATAFILE)
     .then((data) => JSON.parse(data))
     .catch((error) => {
       throw new Error({ error, code: 404 });
@@ -100,22 +101,44 @@ app.route('/crush')
 
       artists.push(newArtist);
 
-      await fs.writeFile('./crush.json', JSON.stringify(artists));
+      await fs.writeFile(DATAFILE, JSON.stringify(artists));
 
       res.status(201).json(newArtist);
     }),
   );
 
-app.get('/crush/:id', rescue(async (req, res) => {
-  const artistId = req.params.id;
-  const findAll = await apiData();
-  const artist = findAll.find((e) => e.id === parseInt(artistId, 10));
+app.route('/crush/:id')
+  .get(rescue(async (req, res) => {
+    const artistId = req.params.id;
+    const findAll = await apiData();
+    const artist = findAll.find((e) => e.id === parseInt(artistId, 10));
 
-  if (!artist) {
-    res.status(404).json({ message: 'Crush não encontrado' });
-  }
-  res.json(artist);
-}));
+    if (!artist) {
+      res.status(404).json({ message: 'Crush não encontrado' });
+    }
+    res.json(artist);
+  }))
+  .put(
+    tokenMiddleware,
+    validateNameMiddleware,
+    validateAgeMiddleware,
+    validateDateMiddleware,
+    validateDateAtMiddleware,
+    validateRateMiddleware,
+    rescue(async (req, res) => {
+      const editArtist = req.body;
+      const artistId = parseInt(req.params.id, 10);
+      const artists = await apiData();
+      const editedArtists = artists.filter((e) => e.id !== artistId);
+      editArtist.id = artistId;
+      editedArtists.push(editArtist);
+      console.log('editedArtists : ', editedArtists);
+
+      await fs.writeFile(DATAFILE, JSON.stringify(editedArtists));
+
+      res.status(200).json(editArtist);
+    }),
+  );
 
 app.use((err, req, res) => {
   res.status(err.code).send(err.error);
