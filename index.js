@@ -138,6 +138,22 @@ app.route('/crush/:id')
 
       res.status(200).json(editArtist);
     }),
+  )
+  .delete(
+    tokenMiddleware,
+    rescue(async (req, res) => {
+      const artistId = parseInt(req.params.id, 10);
+      const artists = await apiData();
+      if (!artists.some((e) => e.id === artistId)) {
+        return res.status(404).json({ message: 'Crush não encontrado' });
+      }
+
+      const removeArtists = artists.filter((e) => e.id !== artistId);
+
+      await fs.writeFile(DATAFILE, JSON.stringify(removeArtists));
+
+      res.status(200).json({ message: 'Crush deletado com sucesso' });
+    }),
   );
 
 app.use((err, req, res) => {
