@@ -3,6 +3,12 @@ const bodyParser = require('body-parser');
 const rescue = require('express-rescue');
 const fs = require('fs').promises;
 const crypto = require('crypto');
+const tokenMiddleware = require('./middlewares/tokenMiddleware');
+const validateNameMiddleware = require('./middlewares/validateNameMiddleware');
+const validateAgeMiddleware = require('./middlewares/validateAgeMiddleware');
+const validateDateMiddleware = require('./middlewares/validateDateMiddleware');
+const validateDateAtMiddleware = require('./middlewares/validateDateAtMiddleware');
+const validateRateMiddleware = require('./middlewares/validateRateMiddleware');
 
 const app = express();
 app.use(bodyParser.json());
@@ -52,22 +58,6 @@ app.get('/', (_request, response) => {
   response.status(SUCCESS).send();
 });
 
-app.get('/crush', rescue(async (req, res) => {
-  const findAll = await apiData();
-  res.json(findAll);
-}));
-
-app.get('/crush/:id', rescue(async (req, res) => {
-  const artistId = req.params.id;
-  const findAll = await apiData();
-  const artist = findAll.find((e) => e.id === parseInt(artistId, 10));
-
-  if (!artist) {
-    res.status(404).json({ message: 'Crush não encontrado' });
-  }
-  res.json(artist);
-}));
-
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
 
@@ -82,6 +72,50 @@ app.post('/login', (req, res) => {
 
   res.json({ token });
 });
+
+app.route('/crush')
+  .get(rescue(async (req, res) => {
+    const findAll = await apiData();
+    res.json(findAll);
+  }))
+  .post(
+    tokenMiddleware,
+    validateNameMiddleware,
+    validateAgeMiddleware,
+    validateDateMiddleware,
+    validateDateAtMiddleware,
+    validateRateMiddleware,
+    rescue(async (req, res) => {
+      const newArtist = req.body;
+      const artists = await apiData();
+
+      let idValue = 1;
+      artists.forEach((e) => {
+        if (e.id === idValue) {
+          idValue += 1;
+        }
+      });
+
+      newArtist.id = idValue;
+
+      artists.push(newArtist);
+
+      await fs.writeFile('./crush.json', JSON.stringify(artists));
+
+      res.status(201).json(newArtist);
+    }),
+  );
+
+app.get('/crush/:id', rescue(async (req, res) => {
+  const artistId = req.params.id;
+  const findAll = await apiData();
+  const artist = findAll.find((e) => e.id === parseInt(artistId, 10));
+
+  if (!artist) {
+    res.status(404).json({ message: 'Crush não encontrado' });
+  }
+  res.json(artist);
+}));
 
 app.use((err, req, res) => {
   res.status(err.code).send(err.error);
