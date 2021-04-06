@@ -74,6 +74,18 @@ app.post('/login', (req, res) => {
   res.json({ token });
 });
 
+app.get('/crush/search', tokenMiddleware, rescue(async (req, res) => {
+  const { q } = req.query;
+  const artists = await apiData();
+
+  if (!q || q === '') {
+    return res.status(200).json(artists);
+  }
+  const searchArtist = artists.filter((e) => (e.name).includes(q));
+
+  res.status(200).json(searchArtist);
+}));
+
 app.route('/crush')
   .get(rescue(async (req, res) => {
     const findAll = await apiData();
