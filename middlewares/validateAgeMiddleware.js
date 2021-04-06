@@ -2,7 +2,7 @@ const validateAgeMiddleware = (req, res, next) => {
   const { age } = req.body;
   console.log(age);
 
-  if (!age || age === '') {
+  if (age === undefined || age === '') {
     return res.status(400).json({ message: 'O campo "age" é obrigatório' });
   }
 

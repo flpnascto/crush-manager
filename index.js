@@ -28,7 +28,7 @@ const apiData = async () => {
 };
 
 function notNullOrEmpty(value) {
-  if (!value || value === '') return true;
+  if (value === undefined || value === '') return true;
   return false;
 }
 
@@ -78,7 +78,7 @@ app.get('/crush/search', tokenMiddleware, rescue(async (req, res) => {
   const { q } = req.query;
   const artists = await apiData();
 
-  if (!q || q === '') {
+  if (q === undefined || q === '') {
     return res.status(200).json(artists);
   }
   const searchArtist = artists.filter((e) => (e.name).includes(q));

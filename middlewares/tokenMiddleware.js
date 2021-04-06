@@ -1,7 +1,7 @@
 const tokenMiddleware = (req, res, next) => {
   const { authorization } = req.headers;
 
-  if (!authorization || authorization === '') {
+  if (authorization === undefined || authorization === '') {
     return res.status(401).json({ message: 'Token não encontrado' });
   }
 

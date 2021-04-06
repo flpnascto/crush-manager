@@ -1,7 +1,7 @@
 const validateRateMiddleware = (req, res, next) => {
   const { date } = req.body;
 
-  if (!date.rate || typeof (date.rate) !== 'number') {
+  if (date.rate === undefined || typeof (date.rate) !== 'number') {
     return res.status(400)
       .json({ message: 'O campo "date" é obrigatório e "datedAt" e "rate" não podem ser vazios' });
   }
